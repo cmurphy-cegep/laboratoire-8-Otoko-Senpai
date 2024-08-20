@@ -51,7 +51,47 @@ class BasicStrategyModified extends BasicStrategy {
 // du compte utilisateur n'a pas la valeur true! Les hash et salt dans la BD sont encodés
 // en base64. La fonction de hachage cryptographique employée est sha512, avec 100000 itérations.
 // Référez-vous au app.js de l'exemple 1 du cours 19 pour voir la marche à suivre.
+passport.use(new BasicStrategy((userAccountId, password, cb) => {
+  userAccountQueries.getLoginByUserAccountId(userAccountId).then(utilisateur => {
+    if (!utilisateur) {
+      // L'utilisateur est introuvable, on appelle le callback cb
+      // avec false en 2e paramètre
+      return cb(null, false);
+    }
 
+    const iterations = 100000;
+    const keylen = 64;
+    const digest = "sha512";
+
+    // Utilisation de la fonction pbkdf2() de la librairie crypto pour calculer le "hash"
+    // du mot de passe:
+    crypto.pbkdf2(password, utilisateur.motDePasseSalt, iterations, keylen, digest, (err, hashedPassword) => {
+      if (err) {
+        return cb(err);
+      }
+
+      // La colonne mot_de_passe_hash dans la BD contient le "hash" du mot de passe encodé
+      // en base64, on le reconvertit en un buffer binaire pour l'utiliser avec la fonction
+      // crypto.timingSafeEqual() :
+      const utilisateurMdpHashBuffer = Buffer.from(utilisateur.motDePasseHash, "base64");
+
+      // timingSafeEqual() fait la comparaison de deux buffers dans un temps constant, afin
+      // de prévenir les attaques temporelles (où on cherche à découvrir une information secrète
+      // selon le temps de calcul que nécessite une opération) :
+      if (!crypto.timingSafeEqual(utilisateurMdpHashBuffer, hashedPassword)) {
+        // Le mot de passe est incorrect, on appelle le callback cb
+        // avec false en 2e paramètre
+        return cb(null, false);
+      }
+
+      // L'authentification a réussi, on appelle le callback cb avec l'objet représentant
+      // le compte utilisateur en 2e paramètre
+      return cb(null, utilisateur);
+    });
+  }).catch(err => {
+    return cb(err);
+  });
+}));
 // passport.use( ... à compléter ... );
 
 
@@ -85,7 +125,23 @@ app.use('/orders', orderRouter);
 // d'un compte utilisateur (p.ex. josbleau).
 
 // app.get('/login', ... à compléter ...);
+app.get('/login',
+  passport.authenticate('basic',{session:false}),
+  (req,res,next)=> {
+    if(req.user){
+      const userDetails = {
+        userAccountId : req.user.user_account_id,
+        userFullName : req.user.user_full_name,
+        isAdmin : req.user.is_admin,
+        isActive : req.user.is_active
+      };
 
+      res.json(userDetails);
+    } else {
+      return next({ status: 500, message: "Propriété user absente" });
+    }
+  }
+)
 
 // *** GESTION DES ERREURS ***
 

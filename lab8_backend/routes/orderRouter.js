@@ -4,6 +4,7 @@ const router = express.Router();
 const HttpError = require("../HttpError");
 
 const orderQueries = require("../queries/OrderQueries");
+const passport = require('passport');
 
 // ** Exercice 1.5 **
 // Active l'authentification pour toutes les routes (chemins d'URL) servis par cet 
@@ -14,7 +15,7 @@ const orderQueries = require("../queries/OrderQueries");
 // Sécurisez adéquatement cette ressource afin que seuls les comptes administrateur puissent
 // y avoir accès. Toute autre tentative de la part d'un compte client normal doit être
 // refusée avec un statut HTTP 403 Forbidden.
-router.get('/', (req, res, next) => {
+router.get('/',passport.authenticate('basic', { session: false }), (req, res, next) => {
     orderQueries.getAllOrders().then(orders => {
         res.json(orders);
     }).catch(err => {
@@ -24,7 +25,7 @@ router.get('/', (req, res, next) => {
 
 
 // POST pour soumettre une nouvelle commande
-router.post('/', (req, res, next) => {
+router.post('/',passport.authenticate('basic', { session: false }), (req, res, next) => {
     // ** Exercice 1.5.2 **
     // Un utilisateur ne doit pouvoir passer une commande que pour son propre panier. Le corps de la
     // requête HTTP contient le champ userId qui identifie quel est le panier à utiliser pour passer

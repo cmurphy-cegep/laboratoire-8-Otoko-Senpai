@@ -6,6 +6,8 @@ const HttpError = require("../HttpError");
 const productQueries = require("../queries/ProductQueries");
 const cartQueries = require("../queries/CartQueries");
 
+const passport = require('passport');
+
 // ** Exercice 1.4 **
 // Activer l'authentification pour toutes les routes (chemins d'URL) servis par cet 
 // objet routeur. On peut faire cela au niveau de l'objet router, car aucune route
@@ -47,7 +49,8 @@ router.get('/:userId', (req, res, next) => {
 });
 
 
-router.put('/:userId/:productId', (req, res, next) => {
+router.put('/:userId/:productId',passport.authenticate('basic', { session: false }), (req, res, next) => {
+    
     try {
         if (!req.params.userId || req.params.userId === '') {
             throw new HttpError(400, "Le paramètre userId doit être spécifié");
@@ -82,7 +85,7 @@ router.put('/:userId/:productId', (req, res, next) => {
 });
 
 // DELETE pour enlever un article d'un panier d'un client
-router.delete('/:userId/:productId', (req, res, next) => {
+router.delete('/:userId/:productId',passport.authenticate('basic', { session: false }), (req, res, next) => {
     try {
         if (!req.params.userId || req.params.userId === '') {
             throw new HttpError(400, "Le paramètre userId doit être spécifié");
@@ -112,7 +115,7 @@ router.delete('/:userId/:productId', (req, res, next) => {
 
 
 // DELETE pour supprimer le panier au complet pour un client
-router.delete('/:userId', (req, res, next) => {
+router.delete('/:userId',passport.authenticate('basic', { session: false }), (req, res, next) => {
     try {
         if (!req.params.userId || req.params.userId === '') {
             throw new HttpError(400, "Le paramètre userId doit être spécifié");

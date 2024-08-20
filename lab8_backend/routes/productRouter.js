@@ -10,6 +10,8 @@ const HttpError = require("../HttpError");
 
 const productQueries = require("../queries/ProductQueries");
 
+const passport = require('passport');
+
 // GET de la liste des produits
 // (Ne requiert pas d'authentification)
 router.get('/', (req, res, next) => {
@@ -112,6 +114,7 @@ router.post('/',
 // Approche similaire que pour le POST ci-haut. La modification d'un produit
 // doit être refusée pour les comptes non-administrateurs (avec un statut HTTP 403).
 router.put('/:id',
+    passport.authenticate('basic', { session: false }),
     (req, res, next) => {
         const id = req.params.id;
         if (!id || id === '') {
@@ -149,6 +152,7 @@ router.put('/:id',
 // Approche similaire que pour le POST ci-haut. Le retrait d'un produit
 // doit être refusée pour les comptes non-administrateurs (avec un statut HTTP 403).
 router.delete('/:id',
+    passport.authenticate('basic', { session: false }),
     (req, res, next) => {
         const id = req.params.id;
         if (!id || id === '') {
@@ -174,6 +178,7 @@ router.post('/:id/image',
     // Fonction middleware de multer pour gérer l'upload d'un fichier dans ce endpoint.
     // Cet appel de middleware doit venir après celui de l'authentification.
     upload.single('product-image'), // doit correspondre à l'id du champ dans le formulaire html
+    passport.authenticate('basic', { session: false }),
     (req, res, next) => {
         const id = req.params.id;
         if (!id || id === '') {
